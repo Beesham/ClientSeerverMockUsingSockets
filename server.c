@@ -80,6 +80,7 @@ int main(void)
         printf("server: got connection from %s\n", clientAddStr);
 
         while(1){
+            memset(&buf[0], 0, sizeof(buf));
             printf("...waiting to recieve...\n");
             while((n = recv(new_fd, buf, sizeof(buf)-1, 0)) > 0){
                 //buf[100] = '\0';
@@ -103,7 +104,7 @@ int main(void)
                 break;
             }
             
-                    }
+        }
 
         printf("server: waiting for connections...\n");
     }

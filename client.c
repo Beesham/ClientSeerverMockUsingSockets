@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     while(1){
         printf("%s", prompt);
         fgets(buffer, sizeof(buffer), stdin);
-        buffer[strlen(buffer)]='\0';
+        buffer[strlen(buffer)-1]='\0';
 
         int bytesSent = send(serverfd, buffer, strlen(buffer),0);
         printf("Bytes sent: %d\n", bytesSent);
@@ -67,14 +67,14 @@ int main(int argc, char *argv[])
         }
 
        // while(1){
-            if ((numbytes = recv(serverfd, buf, sizeof(buf), 0)) == -1) {
-                perror("recv");
-                break;
-            }    
-            
-            //buf[numbytes] = '\0';
-            printf("client: received '%s'\n", buf);
-            
+        if ((numbytes = recv(serverfd, buf, sizeof(buf), 0)) == -1) {
+            perror("recv");
+            break;
+        }    
+        
+        //buf[numbytes] = '\0';
+        printf("client: received '%s'\n", buf);
+        
        // }
 
         fflush(stdout);
