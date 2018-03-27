@@ -26,6 +26,9 @@ void *get_in_addr(struct sockaddr *sa) {
     return &(((struct sockaddr_in *)sa)->sin_addr);
 }
 
+void handler(int signo){
+}
+
 int main(void)
 {
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
@@ -62,59 +65,50 @@ int main(void)
         exit(1);
     }
 
+    signal(SIGPIPE, handler);
     printf("server: waiting for connections...\n");
 
     while(1) {  // main accept() loop
         socklen_t sin_size = sizeof clientAdd;
-        printf("%d\n", sockfd);
         new_fd = accept(sockfd, (struct sockaddr *)&clientAdd, &sin_size);
         int n;
         if (new_fd == -1) {
             perror("accept");
-            exit(1);
-            //continue;
+            continue;
         }
         
         inet_ntop(clientAdd.sin_family,
             get_in_addr((struct sockaddr *)&clientAdd), clientAddStr, sizeof clientAddStr);
         printf("server: got connection from %s\n", clientAddStr);
-
+        
+        int savedStdout = dup(STDOUT_FILENO);
+        dup2(new_fd, STDOUT_FILENO);
+        
         while(1){
             memset(&buf[0], 0, sizeof(buf));
-            printf("...waiting to recieve...\n");
-            while((n = recv(new_fd, buf, sizeof(buf)-1, 0)) > 0){
-                //buf[100] = '\0';
-                printf("%s\n",buf); 
-                printf("Bytes rec:%d\n", n); 
+            if((n = recv(new_fd, buf, sizeof(buf)-1, 0)) > 0){
                
-               
-                dup2(new_fd, STDOUT_FILENO);
                 //execute cmd
                 if(!fork()) {
                     execlp(buf, buf, NULL);
                     exit(1);
                 }
                 
-                //Send to the client
-                /*
-                int sentBytes;
-                if (sentBytes = send(new_fd, "Hello, world!", 100, 0) == -1) {
-                    perror("send");
-                }
-                printf("sent bytes: %d\n", sentBytes);
-                */
-                   
+                int status;
+                wait(&status);
+                fflush(stdout); 
             }
             if(n == 0){
-                perror("Client");
                 break;
             }else if(n < 0) {
-                perror("recv");
                 break;
             }
             
         }
-
+        
+        close(new_fd);
+        dup2(savedStdout, STDOUT_FILENO);
+        close(savedStdout);
         printf("server: waiting for connections...\n");
     }
 
