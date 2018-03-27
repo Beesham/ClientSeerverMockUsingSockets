@@ -86,14 +86,23 @@ int main(void)
                 //buf[100] = '\0';
                 printf("%s\n",buf); 
                 printf("Bytes rec:%d\n", n); 
+               
+               
+                dup2(new_fd, STDOUT_FILENO);
+                //execute cmd
+                if(!fork()) {
+                    execlp(buf, buf, NULL);
+                    exit(1);
+                }
                 
                 //Send to the client
+                /*
                 int sentBytes;
                 if (sentBytes = send(new_fd, "Hello, world!", 100, 0) == -1) {
                     perror("send");
                 }
                 printf("sent bytes: %d\n", sentBytes);
-
+                */
                    
             }
             if(n == 0){
