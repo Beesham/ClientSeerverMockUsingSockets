@@ -13,7 +13,7 @@
 
 #define PORT 40041 // the port client will be connecting to 
 
-#define MAXDATASIZE 100 // max number of bytes we can get at once 
+#define MAXDATASIZE 1000 // max number of bytes we can get at once 
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -25,8 +25,6 @@ int main(int argc, char *argv[])
 {
     int serverfd, numbytes;  
     char buf[MAXDATASIZE];
-    char s[INET_ADDRSTRLEN];
-    socklen_t sin_size;    
     struct sockaddr_in servAdd;
 
     if (argc != 2) {
@@ -34,52 +32,54 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    //Created the socket
     if((serverfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("Error: client");
         exit(1);
     }
 
+    //Define the connection
     servAdd.sin_family = AF_INET;
     servAdd.sin_addr.s_addr = inet_addr(argv[1]);
     servAdd.sin_port = PORT;
 
+    //connect to the socket
     if ((connect(serverfd, (struct sockaddr*)&servAdd, sizeof(servAdd)) == -1)) {
         close(serverfd);
         perror("client: failed to connect");
         exit(1);
     }
 
-
     char buffer[1000];
     char prompt[]=">>";
-    size_t nBytes;
 
+    //Read/write to the socket
     while(1){
+        //clear the buffers because of repeated use
+        memset(&buf, 0, sizeof(buf));
+        memset(&buffer, 0, sizeof(buffer));
+        
+        //get imput from user
         printf("%s", prompt);
         fgets(buffer, sizeof(buffer), stdin);
         buffer[strlen(buffer)-1]='\0';
 
+        //send command to the server
         int bytesSent = send(serverfd, buffer, strlen(buffer),0);
-        printf("Bytes sent: %d\n", bytesSent);
-        if(bytesSent < 0) {
-            perror("send");
-            exit(1);
+        if(bytesSent <= 0) {
+           perror("send");
+           break; 
         }
 
-       // while(1){
-        if ((numbytes = recv(serverfd, buf, sizeof(buf), 0)) == -1) {
-            perror("recv");
+        //read responce
+        if ((numbytes = recv(serverfd, buf, MAXDATASIZE, 0)) <= 0) {
+            printf("Server disconnected\n");
             break;
         }    
         
-        //buf[numbytes] = '\0';
-        printf("client: received '%s'\n", buf);
-        
-       // }
-
+        printf("%s\n", buf);
         fflush(stdout);
+        fflush(stdin);
     }//end of while(1)    
     close(serverfd);
-
-    return 0;
 }
