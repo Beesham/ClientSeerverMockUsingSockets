@@ -1,3 +1,11 @@
+/*
+    Beesham Sarendranauth
+    104854956
+    2018/03/29
+    Description: creates a client side connection to server. mimics ssh without the security
+*/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
